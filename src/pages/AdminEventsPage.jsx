@@ -2,6 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api'
 
+const DAYS = ['일', '월', '화', '수', '목', '금', '토']
+const formatDate = (dateStr) => {
+  const d = new Date(dateStr + 'T00:00:00')
+  return `${dateStr} (${DAYS[d.getDay()]})`
+}
+
 const DEFAULT_SLOTS = [
   { slot_time: '10:30', capacity: 10 },
   { slot_time: '12:00', capacity: 10 },
@@ -63,7 +69,7 @@ function EditModal({ event, onClose, onDone }) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold text-gray-800">일정 수정 — {event.event_date}</h3>
+          <h3 className="text-base font-semibold text-gray-800">일정 수정 — {formatDate(event.event_date)}</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
         </div>
 
@@ -339,8 +345,8 @@ export default function AdminEventsPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <Link to={`/events/${event.event_date}`} className={`font-semibold text-sm hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
-                            {event.event_date}
+                          <Link to={`/events/${formatDate(event.event_date)}`} className={`font-semibold text-sm hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+                            {formatDate(event.event_date)}
                           </Link>
                           {past && <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
                         </div>
@@ -386,8 +392,8 @@ export default function AdminEventsPage() {
                       return (
                         <tr key={event.id} className={`border-b last:border-0 transition-colors ${past ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'}`}>
                           <td className="px-5 py-3">
-                            <Link to={`/events/${event.event_date}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
-                              {event.event_date}
+                            <Link to={`/events/${formatDate(event.event_date)}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+                              {formatDate(event.event_date)}
                             </Link>
                             {past && <span className="ml-2 text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
                           </td>
