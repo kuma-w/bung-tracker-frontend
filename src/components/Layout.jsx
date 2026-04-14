@@ -59,8 +59,8 @@ export default function Layout() {
             </Link>
             <nav className="flex gap-1">
               {desktopLink("/", "일정", true)}
-              {desktopLink("/admin", "일정 관리")}
-              {desktopLink("/admin/payments", "입금 내역")}
+              {desktopLink("/admin", "일정 관리", true)}
+              {desktopLink("/admin/payments", "입금 내역", true)}
             </nav>
           </div>
           {isAdmin && (
@@ -92,8 +92,8 @@ export default function Layout() {
           </div>
           <nav className="flex px-2">
             {mobileLink("/", "일정", true)}
-            {mobileLink("/admin", "일정 관리")}
-            {mobileLink("/admin/payments", "입금 내역")}
+            {mobileLink("/admin", "일정 관리", true)}
+            {mobileLink("/admin/payments", "입금 내역", true)}
           </nav>
         </div>
       </header>
