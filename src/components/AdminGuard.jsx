@@ -5,7 +5,9 @@ async function validateKey(key) {
   const res = await fetch('/payments?limit=1', {
     headers: { 'x-admin-key': key },
   })
-  return res.ok
+  if (res.ok) return { valid: true }
+  if (res.status === 403) return { valid: false, reason: 'key' }
+  return { valid: false, reason: 'server' }
 }
 
 export default function AdminGuard() {
@@ -21,15 +23,17 @@ export default function AdminGuard() {
     setLoading(true)
     setError('')
     try {
-      const ok = await validateKey(input.trim())
-      if (ok) {
+      const result = await validateKey(input.trim())
+      if (result.valid) {
         localStorage.setItem('adminKey', input.trim())
         setSaved(true)
+      } else if (result.reason === 'server') {
+        setError('서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.')
       } else {
         setError('관리자 키가 올바르지 않습니다.')
       }
     } catch {
-      setError('서버에 연결할 수 없습니다.')
+      setError('서버에 연결할 수 없습니다. 백엔드가 실행 중인지 확인하세요.')
     } finally {
       setLoading(false)
     }
