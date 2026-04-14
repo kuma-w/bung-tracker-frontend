@@ -314,7 +314,7 @@ export default function AdminEventsPage() {
         )}
       </div>
 
-      {/* Events table */}
+      {/* Events list */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         <div className="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
           <h2 className="font-semibold text-gray-700 text-sm">등록된 일정 목록</h2>
@@ -327,69 +327,99 @@ export default function AdminEventsPage() {
         ) : events.length === 0 ? (
           <div className="text-center py-10 text-gray-400 text-sm">등록된 일정이 없습니다.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <div className="max-h-[480px] overflow-y-auto">
-              <table className="w-full text-sm">
-                <thead className="sticky top-0 z-10">
-                  <tr className="text-left text-gray-500 border-b bg-gray-50 text-xs">
-                    <th className="px-5 py-3 font-medium">날짜</th>
-                    <th className="px-5 py-3 font-medium">참가비</th>
-                    <th className="px-5 py-3 font-medium">슬롯</th>
-                    <th className="px-5 py-3 font-medium">참석 현황</th>
-                    <th className="px-5 py-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {events.map(event => {
-                    const total = event.slots.reduce((s, sl) => s + sl.count, 0)
-                    const cap = event.slots.reduce((s, sl) => s + sl.capacity, 0)
-                    const past = new Date(event.event_date + 'T00:00:00') < (() => { const t = new Date(); t.setHours(0,0,0,0); return t })()
-                    return (
-                      <tr key={event.id} className={`border-b last:border-0 transition-colors ${past ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'}`}>
-                        <td className="px-5 py-3">
-                          <Link to={`/events/${event.event_date}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+          <>
+            {/* ── 모바일: 카드 목록 ── */}
+            <div className="sm:hidden max-h-[480px] overflow-y-auto divide-y divide-gray-100">
+              {events.map(event => {
+                const total = event.slots.reduce((s, sl) => s + sl.count, 0)
+                const cap = event.slots.reduce((s, sl) => s + sl.capacity, 0)
+                const past = new Date(event.event_date + 'T00:00:00') < (() => { const t = new Date(); t.setHours(0,0,0,0); return t })()
+                return (
+                  <div key={event.id} className={`px-4 py-3 ${past ? 'opacity-60' : ''}`}>
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <Link to={`/events/${event.event_date}`} className={`font-semibold text-sm hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
                             {event.event_date}
                           </Link>
-                          {past && <span className="ml-2 text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
-                        </td>
-                        <td className="px-5 py-3">{event.amount_per_person.toLocaleString()}원</td>
-                        <td className="px-5 py-3 text-gray-500">
-                          {event.slots.map(s => `${s.slot_time}(${s.count}/${s.capacity})`).join(' · ')}
-                        </td>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-20 bg-gray-100 rounded-full h-1.5">
-                              <div
-                                className={`h-1.5 rounded-full ${past ? 'bg-gray-300' : total >= cap ? 'bg-red-400' : 'bg-indigo-400'}`}
-                                style={{ width: `${Math.min(100, cap > 0 ? (total / cap) * 100 : 0)}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-gray-500">{total}/{cap}</span>
-                          </div>
-                        </td>
-                        <td className="px-5 py-3 text-right">
-                          <div className="flex gap-3 justify-end">
-                            <button
-                              onClick={() => setEditTarget(event)}
-                              className="text-indigo-400 hover:text-indigo-600 text-xs font-medium transition-colors"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={() => handleDelete(event.event_date)}
-                              className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                          {past && <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-0.5">{event.amount_per_person.toLocaleString()}원 · {event.slots.map(s => `${s.slot_time}(${s.count}/${s.capacity})`).join(' · ')}</p>
+                      </div>
+                      <div className="flex gap-3 ml-3 shrink-0">
+                        <button onClick={() => setEditTarget(event)} className="text-indigo-400 hover:text-indigo-600 text-xs font-medium">수정</button>
+                        <button onClick={() => handleDelete(event.event_date)} className="text-red-400 hover:text-red-600 text-xs font-medium">삭제</button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                        <div
+                          className={`h-1.5 rounded-full ${past ? 'bg-gray-300' : total >= cap ? 'bg-red-400' : 'bg-indigo-400'}`}
+                          style={{ width: `${Math.min(100, cap > 0 ? (total / cap) * 100 : 0)}%` }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400 shrink-0">{total}/{cap}명</span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-          </div>
+
+            {/* ── 데스크톱: 테이블 ── */}
+            <div className="hidden sm:block">
+              <div className="max-h-[480px] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="sticky top-0 z-10">
+                    <tr className="text-left text-gray-500 border-b bg-gray-50 text-xs">
+                      <th className="px-5 py-3 font-medium">날짜</th>
+                      <th className="px-5 py-3 font-medium">참가비</th>
+                      <th className="px-5 py-3 font-medium">슬롯</th>
+                      <th className="px-5 py-3 font-medium">참석 현황</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {events.map(event => {
+                      const total = event.slots.reduce((s, sl) => s + sl.count, 0)
+                      const cap = event.slots.reduce((s, sl) => s + sl.capacity, 0)
+                      const past = new Date(event.event_date + 'T00:00:00') < (() => { const t = new Date(); t.setHours(0,0,0,0); return t })()
+                      return (
+                        <tr key={event.id} className={`border-b last:border-0 transition-colors ${past ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'}`}>
+                          <td className="px-5 py-3">
+                            <Link to={`/events/${event.event_date}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+                              {event.event_date}
+                            </Link>
+                            {past && <span className="ml-2 text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
+                          </td>
+                          <td className="px-5 py-3">{event.amount_per_person.toLocaleString()}원</td>
+                          <td className="px-5 py-3 text-gray-500">
+                            {event.slots.map(s => `${s.slot_time}(${s.count}/${s.capacity})`).join(' · ')}
+                          </td>
+                          <td className="px-5 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-20 bg-gray-100 rounded-full h-1.5">
+                                <div
+                                  className={`h-1.5 rounded-full ${past ? 'bg-gray-300' : total >= cap ? 'bg-red-400' : 'bg-indigo-400'}`}
+                                  style={{ width: `${Math.min(100, cap > 0 ? (total / cap) * 100 : 0)}%` }}
+                                />
+                              </div>
+                              <span className="text-xs text-gray-500">{total}/{cap}</span>
+                            </div>
+                          </td>
+                          <td className="px-5 py-3 text-right">
+                            <div className="flex gap-3 justify-end">
+                              <button onClick={() => setEditTarget(event)} className="text-indigo-400 hover:text-indigo-600 text-xs font-medium transition-colors">수정</button>
+                              <button onClick={() => handleDelete(event.event_date)} className="text-red-400 hover:text-red-600 text-xs font-medium transition-colors">삭제</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
