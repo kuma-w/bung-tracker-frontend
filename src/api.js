@@ -1,3 +1,5 @@
+const API_BASE = import.meta.env.VITE_API_BASE || ''
+
 function getAdminKey() {
   return localStorage.getItem('adminKey') || ''
 }
@@ -11,7 +13,7 @@ async function request(method, path, body = null, adminRequired = false) {
   const options = { method, headers }
   if (body) options.body = JSON.stringify(body)
 
-  const res = await fetch(path, options)
+  const res = await fetch(API_BASE + path, options)
   const data = await res.json()
 
   if (!res.ok) {
