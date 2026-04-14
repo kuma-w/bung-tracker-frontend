@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 
 export default function Layout() {
   const location = useLocation()
-  const [showKeyModal, setShowKeyModal] = useState(false)
-  const [keyInput, setKeyInput] = useState(localStorage.getItem('adminKey') || '')
+  const navigate = useNavigate()
+  const [showModal, setShowModal] = useState(false)
+  const isAdmin = !!localStorage.getItem('adminKey')
 
-  const saveKey = () => {
-    localStorage.setItem('adminKey', keyInput)
-    setShowKeyModal(false)
+  const handleLogout = () => {
+    localStorage.removeItem('adminKey')
+    setShowModal(false)
+    navigate('/')
+    window.location.reload()
   }
 
   const navLink = (to, label, exact = false) => {
@@ -41,16 +44,17 @@ export default function Layout() {
               {navLink('/admin/payments', '입금 내역')}
             </nav>
           </div>
-          <button
-            onClick={() => {
-              setKeyInput(localStorage.getItem('adminKey') || '')
-              setShowKeyModal(true)
-            }}
-            className="text-indigo-200 hover:text-white text-lg transition-colors"
-            title="관리자 키 설정"
-          >
-            ⚙️
-          </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setShowModal(true)}
+              className="text-indigo-200 hover:text-white text-xs font-medium transition-colors flex items-center gap-1"
+              title="관리자 메뉴"
+            >
+              <span className="w-2 h-2 bg-emerald-400 rounded-full" />
+              관리자
+            </button>
+          )}
         </div>
       </header>
 
@@ -58,34 +62,25 @@ export default function Layout() {
         <Outlet />
       </main>
 
-      {showKeyModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-80 shadow-2xl">
-            <h3 className="text-base font-semibold text-gray-800 mb-1">관리자 키 설정</h3>
-            <p className="text-xs text-gray-500 mb-3">관리자 기능을 사용하려면 x-admin-key를 입력하세요.</p>
-            <input
-              type="password"
-              value={keyInput}
-              onChange={e => setKeyInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && saveKey()}
-              placeholder="관리자 키 입력"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              autoFocus
-            />
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowKeyModal(false)}
-                className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={saveKey}
-                className="px-4 py-1.5 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                저장
-              </button>
-            </div>
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <div
+            className="bg-white rounded-xl p-6 w-72 shadow-2xl"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-gray-800 mb-4">관리자</h3>
+            <p className="text-xs text-gray-400 mb-5">
+              현재 기기에 관리자 키가 저장되어 있습니다.
+            </p>
+            <button
+              onClick={handleLogout}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+            >
+              로그아웃
+            </button>
           </div>
         </div>
       )}
