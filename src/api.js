@@ -30,6 +30,7 @@ export const api = {
 
   // 관리자 - 벙 관리
   createEvent: (body) => request('POST', '/events', body, true),
+  updateEvent: (date, body) => request('PATCH', `/events/${date}`, body, true),
   deleteEvent: (date) => request('DELETE', `/events/${date}`, null, true),
 
   // 관리자 - 참석자 관리
