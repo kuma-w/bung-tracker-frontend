@@ -83,6 +83,7 @@ export default function EventsPage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showPast, setShowPast] = useState(false);
 
   useEffect(() => {
     api
@@ -109,25 +110,50 @@ export default function EventsPage() {
     );
   }
 
-  if (events.length === 0) {
-    return (
-      <div className="text-center py-20 text-gray-400">
-        <p className="text-5xl mb-4">🏸</p>
-        <p className="font-medium">예정된 일정이 없습니다.</p>
-      </div>
-    );
-  }
+  const upcoming = events.filter((e) => !isPast(e.event_date));
+  const past = events.filter((e) => isPast(e.event_date));
 
   return (
     <div>
       <h1 className="text-xl font-bold text-gray-800 mb-5">일정</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {events.map((event) => (
-          <Link key={event.id} to={`/events/${event.event_date}`}>
-            <EventCard event={event} />
-          </Link>
-        ))}
-      </div>
+
+      {/* 예정 일정 */}
+      {upcoming.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <p className="text-5xl mb-4">🏸</p>
+          <p className="font-medium">예정된 일정이 없습니다.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 mb-8">
+          {upcoming.map((event) => (
+            <Link key={event.id} to={`/events/${event.event_date}`}>
+              <EventCard event={event} />
+            </Link>
+          ))}
+        </div>
+      )}
+
+      {/* 지난 일정 토글 */}
+      {past.length > 0 && (
+        <div>
+          <button
+            onClick={() => setShowPast((v) => !v)}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-4"
+          >
+            <span className={`transition-transform ${showPast ? "rotate-90" : ""}`}>▶</span>
+            지난 일정 ({past.length}개)
+          </button>
+          {showPast && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {past.map((event) => (
+                <Link key={event.id} to={`/events/${event.event_date}`}>
+                  <EventCard event={event} />
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
