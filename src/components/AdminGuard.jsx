@@ -5,7 +5,7 @@ async function validateKey(key) {
   const res = await fetch('/payments?limit=1', {
     headers: { 'x-admin-key': key },
   })
-  return res.status !== 403
+  return res.ok
 }
 
 export default function AdminGuard() {
