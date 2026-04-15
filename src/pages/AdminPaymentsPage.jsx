@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { api } from '../api'
 
 const STATUS_MAP = {
@@ -183,42 +183,42 @@ function AssignModal({ payment, onClose, onDone, onSuccess }) {
 }
 
 export default function AdminPaymentsPage() {
-  const [payments, setPayments] = useState([])
-  const [total, setTotal] = useState(0)
+  const [allPayments, setAllPayments] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('')
   const [assignTarget, setAssignTarget] = useState(null)
   const [toast, setToast] = useState(null)
+  const [nameFilter, setNameFilter] = useState('')
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
+  const [filterOpen, setFilterOpen] = useState(false)
 
-  const load = useCallback((status = activeTab) => {
+  const load = useCallback(() => {
     setLoading(true)
-
-    const fetchAll = (statuses) =>
-      Promise.all(statuses.map(s => api.getPayments({ status: s })))
-        .then(results => {
-          const payments = results.flatMap(r => r.payments || [])
-          payments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-          return { payments, total: payments.length }
-        })
-
-    const promise =
-      status === 'manual'
-        ? fetchAll(['pending', 'partial', 'failed'])
-        : api.getPayments(status ? { status } : {})
-
-    promise
-      .then(data => {
-        setPayments(data.payments || [])
-        setTotal(data.total || 0)
-      })
+    api.getPayments({ limit: 1000 })
+      .then(data => setAllPayments(data.payments || []))
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [activeTab])
+  }, [])
 
-  useEffect(() => { load(activeTab) }, [activeTab])
+  useEffect(() => { load() }, [])
 
-  const handleTabChange = (val) => {
-    setActiveTab(val)
+  const payments = useMemo(() => {
+    const MANUAL_STATUSES = ['pending', 'partial', 'failed']
+    return allPayments.filter(p => {
+      if (activeTab === 'manual' && !MANUAL_STATUSES.includes(p.status)) return false
+      if (activeTab && activeTab !== 'manual' && p.status !== activeTab) return false
+      if (nameFilter.trim() && !p.parsed_names?.some(n => n.includes(nameFilter.trim()))) return false
+      if (fromDate && p.created_at < fromDate) return false
+      if (toDate && p.created_at > toDate + 'T23:59:59') return false
+      return true
+    })
+  }, [allPayments, activeTab, nameFilter, fromDate, toDate])
+
+  const handleReset = () => {
+    setNameFilter('')
+    setFromDate('')
+    setToDate('')
   }
 
   const canAssign = (status) => ['pending', 'partial', 'failed'].includes(status)
@@ -228,11 +228,11 @@ export default function AdminPaymentsPage() {
       <h1 className="text-xl font-bold text-gray-800 mb-5">입금 내역</h1>
 
       {/* Filter tabs */}
-      <div className="flex gap-1 mb-5 bg-gray-100 rounded-xl p-1 w-fit">
+      <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1 w-fit">
         {TABS.map(tab => (
           <button
             key={tab.value}
-            onClick={() => handleTabChange(tab.value)}
+            onClick={() => setActiveTab(tab.value)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === tab.value
                 ? 'bg-white text-gray-800 shadow-sm'
@@ -244,10 +244,66 @@ export default function AdminPaymentsPage() {
         ))}
       </div>
 
+      {/* 이름·기간 필터 */}
+      <div className="bg-white rounded-xl border shadow-sm mb-4">
+        <button
+          onClick={() => setFilterOpen(o => !o)}
+          className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-600 hover:bg-gray-50 rounded-xl transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            필터
+            {(nameFilter || fromDate || toDate) && (
+              <span className="text-xs bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-full">적용 중</span>
+            )}
+          </span>
+          <span className="text-gray-400 text-xs">{filterOpen ? '▲' : '▼'}</span>
+        </button>
+
+        {filterOpen && (
+          <div className="px-4 pb-4 border-t pt-3 space-y-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">이름</label>
+              <input
+                value={nameFilter}
+                onChange={e => setNameFilter(e.target.value)}
+                placeholder="홍길동"
+                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">기간</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={e => setFromDate(e.target.value)}
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+                <span className="text-gray-300 text-sm">~</span>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={e => setToDate(e.target.value)}
+                  className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                />
+              </div>
+            </div>
+            {(nameFilter || fromDate || toDate) && (
+              <button
+                onClick={handleReset}
+                className="w-full py-2 text-sm text-gray-500 border rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                초기화
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Cards */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-xs text-gray-400">총 {total}건</span>
+          <span className="text-xs text-gray-400">총 {payments.length}건</span>
         </div>
 
         {loading ? (
@@ -327,7 +383,7 @@ export default function AdminPaymentsPage() {
           onClose={() => setAssignTarget(null)}
           onSuccess={(msg) => setToast(msg)}
           onDone={() => {
-            load(activeTab)
+            load()
             setAssignTarget(null)
           }}
         />
