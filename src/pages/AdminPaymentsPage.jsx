@@ -169,10 +169,9 @@ export default function AdminPaymentsPage() {
         ))}
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-        <div className="px-5 py-3 border-b bg-gray-50 flex items-center justify-between">
-          <h2 className="font-semibold text-gray-700 text-sm">결제 내역</h2>
+      {/* Cards */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-gray-400">총 {total}건</span>
         </div>
 
@@ -183,59 +182,66 @@ export default function AdminPaymentsPage() {
         ) : payments.length === 0 ? (
           <div className="text-center py-10 text-gray-400 text-sm">내역이 없습니다.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500 border-b bg-gray-50/50 text-xs">
-                  <th className="px-4 py-3 font-medium">ID</th>
-                  <th className="px-4 py-3 font-medium">원본 내용</th>
-                  <th className="px-4 py-3 font-medium">금액</th>
-                  <th className="px-4 py-3 font-medium">이름</th>
-                  <th className="px-4 py-3 font-medium">날짜</th>
-                  <th className="px-4 py-3 font-medium">상태</th>
-                  <th className="px-4 py-3 font-medium">수신 시각</th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {payments.map(p => (
-                  <tr key={p.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 text-gray-400 text-xs">#{p.id}</td>
-                    <td className="px-4 py-3 max-w-[200px]">
-                      <p className="font-medium text-gray-700 truncate">{p.raw_content}</p>
-                      {p.fail_reason && (
-                        <p className="text-red-400 text-xs mt-0.5 truncate">{p.fail_reason}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 whitespace-nowrap">
-                      {p.amount.toLocaleString()}원
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      {p.parsed_names?.join(', ') || <span className="text-gray-300">-</span>}
-                    </td>
-                    <td className="px-4 py-3 text-gray-500 text-xs">
-                      {p.parsed_dates?.join(', ') || <span className="text-gray-300">-</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={p.status} />
-                    </td>
-                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                      {p.created_at?.replace('T', ' ').slice(0, 16)}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {canAssign(p.status) && (
-                        <button
-                          onClick={() => setAssignTarget(p)}
-                          className="text-indigo-500 hover:text-indigo-700 text-xs font-medium transition-colors whitespace-nowrap"
-                        >
-                          수동 배정
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            {payments.map(p => {
+              const dt = p.created_at ? new Date(p.created_at) : null
+              const dateStr = dt
+                ? `${dt.getFullYear()}.${String(dt.getMonth() + 1).padStart(2, '0')}.${String(dt.getDate()).padStart(2, '0')}`
+                : ''
+              const timeStr = dt
+                ? `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`
+                : ''
+
+              return (
+                <div key={p.id} className="bg-white rounded-xl shadow-sm border p-4">
+                  {/* 상단: 날짜·시간 + 상태 */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-sm font-semibold text-gray-700">{dateStr}</span>
+                      <span className="text-xs text-gray-400">{timeStr}</span>
+                    </div>
+                    <StatusBadge status={p.status} />
+                  </div>
+
+                  {/* 원본 내용 */}
+                  <div className="bg-gray-50 rounded-lg px-3 py-2 mb-3 text-sm text-gray-700 font-mono break-all">
+                    {p.raw_content || <span className="text-gray-300">-</span>}
+                  </div>
+
+                  {/* 파싱 결과 */}
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 mb-2">
+                    <span>
+                      <span className="text-gray-400 mr-1">이름</span>
+                      {p.parsed_names?.length ? p.parsed_names.join(', ') : <span className="text-gray-300">-</span>}
+                    </span>
+                    <span>
+                      <span className="text-gray-400 mr-1">일정</span>
+                      {p.parsed_dates?.length ? p.parsed_dates.join(', ') : <span className="text-gray-300">-</span>}
+                    </span>
+                    <span className="font-medium text-gray-700">
+                      {p.amount?.toLocaleString()}원
+                    </span>
+                  </div>
+
+                  {/* 실패 사유 */}
+                  {p.fail_reason && (
+                    <p className="text-xs text-red-400 mb-2">{p.fail_reason}</p>
+                  )}
+
+                  {/* 수동 배정 버튼 */}
+                  {canAssign(p.status) && (
+                    <div className="flex justify-end">
+                      <button
+                        onClick={() => setAssignTarget(p)}
+                        className="text-xs font-medium text-indigo-500 hover:text-indigo-700 transition-colors"
+                      >
+                        수동 배정
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
