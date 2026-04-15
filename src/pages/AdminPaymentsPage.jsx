@@ -10,10 +10,8 @@ const STATUS_MAP = {
 
 const TABS = [
   { value: '', label: '전체' },
-  { value: 'pending', label: '처리 중' },
   { value: 'assigned', label: '배정 완료' },
-  { value: 'partial', label: '일부 배정' },
-  { value: 'failed', label: '실패' },
+  { value: 'manual', label: '수동 배정 필요' },
 ]
 
 function StatusBadge({ status }) {
@@ -27,22 +25,46 @@ function StatusBadge({ status }) {
 
 function AssignModal({ payment, onClose, onDone }) {
   const [names, setNames] = useState(payment.parsed_names?.join(', ') || '')
-  const [dates, setDates] = useState(payment.parsed_dates?.join(', ') || '')
+  const [date, setDate] = useState(payment.parsed_dates?.[0] || '')
+  const [selectedSlots, setSelectedSlots] = useState([])
+  const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState(null)
 
+  useEffect(() => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { setSlots([]); setSelectedSlots([]); return }
+    api.getEventDetail(date)
+      .then(data => { setSlots(data.slots || []); setSelectedSlots([]) })
+      .catch(() => { setSlots([]); setSelectedSlots([]) })
+  }, [date])
+
+  const toggleSlot = (slot_time) => {
+    setSelectedSlots(prev =>
+      prev.includes(slot_time) ? prev.filter(s => s !== slot_time) : [...prev, slot_time]
+    )
+  }
+
   const handleAssign = async () => {
     const nameList = names.split(/[\s,]+/).map(n => n.trim()).filter(Boolean)
-    const dateList = dates.split(/[\s,]+/).map(d => d.trim()).filter(Boolean)
-    if (!nameList.length || !dateList.length) {
+    if (!nameList.length || !date) {
       setResult({ ok: false, message: '이름과 날짜를 입력하세요.' })
+      return
+    }
+    if (slots.length > 0 && selectedSlots.length === 0) {
+      setResult({ ok: false, message: '슬롯을 선택하세요.' })
       return
     }
     setLoading(true)
     setResult(null)
     try {
-      const res = await api.assignPayment(payment.id, { names: nameList, dates: dateList })
-      setResult({ ok: true, message: res.message })
+      const targets = selectedSlots.length > 0 ? selectedSlots : [null]
+      let lastRes
+      for (const slot_time of targets) {
+        const body = { names: nameList, dates: [date] }
+        if (slot_time) body.slot_time = slot_time
+        lastRes = await api.assignPayment(payment.id, body)
+      }
+      setResult({ ok: true, message: lastRes.message })
       onDone()
     } catch (err) {
       setResult({ ok: false, message: err.message })
@@ -79,14 +101,45 @@ function AssignModal({ payment, onClose, onDone }) {
             />
           </div>
           <div>
-            <label className="text-xs text-gray-500 font-medium mb-1 block">날짜 (YYYY-MM-DD, 쉼표 또는 공백 구분)</label>
+            <label className="text-xs text-gray-500 font-medium mb-1 block">날짜</label>
             <input
-              value={dates}
-              onChange={e => setDates(e.target.value)}
-              placeholder="2026-04-17, 2026-04-24"
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
               className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
+          {slots.length > 0 && (
+            <div>
+              <label className="text-xs text-gray-500 font-medium mb-1 block">
+                슬롯 선택
+                {selectedSlots.length > 0 && (
+                  <span className="ml-1 text-indigo-500">({selectedSlots.length}개 선택됨)</span>
+                )}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {slots.map(s => {
+                  const selected = selectedSlots.includes(s.slot_time)
+                  return (
+                    <button
+                      key={s.slot_time}
+                      onClick={() => toggleSlot(s.slot_time)}
+                      className={`px-3 py-1.5 rounded-lg text-xs border transition-colors ${
+                        selected
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'text-gray-600 border-gray-200 hover:border-indigo-400'
+                      }`}
+                    >
+                      {s.slot_time}
+                      <span className={`ml-1 ${selected ? 'text-indigo-200' : 'text-gray-400'}`}>
+                        ({s.remaining ?? (s.capacity - s.count)}명 남음)
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {result && (
@@ -128,10 +181,21 @@ export default function AdminPaymentsPage() {
 
   const load = useCallback((status = activeTab) => {
     setLoading(true)
-    const params = {}
-    if (status) params.status = status
-    api
-      .getPayments(params)
+
+    const fetchAll = (statuses) =>
+      Promise.all(statuses.map(s => api.getPayments({ status: s })))
+        .then(results => {
+          const payments = results.flatMap(r => r.payments || [])
+          payments.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+          return { payments, total: payments.length }
+        })
+
+    const promise =
+      status === 'manual'
+        ? fetchAll(['pending', 'partial', 'failed'])
+        : api.getPayments(status ? { status } : {})
+
+    promise
       .then(data => {
         setPayments(data.payments || [])
         setTotal(data.total || 0)
