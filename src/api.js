@@ -37,8 +37,10 @@ export const api = {
 
   // 관리자 - 참석자 관리
   addAttendees: (date, body) => request('POST', `/events/${date}/attendees`, body, true),
-  deleteAttendee: (date, name) =>
-    request('DELETE', `/events/${date}/attendees/${encodeURIComponent(name)}`, null, true),
+  deleteAttendee: (date, name, slotTime) => {
+    const q = slotTime ? `?slot_time=${encodeURIComponent(slotTime)}` : ''
+    return request('DELETE', `/events/${date}/attendees/${encodeURIComponent(name)}${q}`, null, true)
+  },
 
   // 관리자 - 입금 내역
   getPayments: (params = {}) => {

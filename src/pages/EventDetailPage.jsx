@@ -51,10 +51,10 @@ export default function EventDetailPage() {
     }
   }
 
-  const handleDelete = async (name) => {
-    if (!window.confirm(`${name}님을 삭제할까요?`)) return
+  const handleDelete = async (name, slotTime) => {
+    if (!window.confirm(`${name}님 (${slotTime}) 을 삭제할까요?`)) return
     try {
-      await api.deleteAttendee(date, name)
+      await api.deleteAttendee(date, name, slotTime)
       load()
     } catch (err) {
       alert(err.message)
@@ -132,7 +132,7 @@ export default function EventDetailPage() {
                     <span className="text-gray-700">{att.name}</span>
                     {adminKey && (
                       <button
-                        onClick={() => handleDelete(att.name)}
+                        onClick={() => handleDelete(att.name, slot.slot_time)}
                         className="text-gray-300 hover:text-red-500 transition-colors ml-0.5 text-base leading-none"
                         title="삭제"
                       >
