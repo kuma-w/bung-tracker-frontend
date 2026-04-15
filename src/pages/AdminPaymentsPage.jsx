@@ -14,6 +14,20 @@ const TABS = [
   { value: 'manual', label: '수동 배정 필요' },
 ]
 
+function Toast({ message, onHide }) {
+  useEffect(() => {
+    const t = setTimeout(onHide, 3000)
+    return () => clearTimeout(t)
+  }, [onHide])
+
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white text-sm font-medium px-5 py-3 rounded-xl shadow-lg flex items-center gap-2 animate-fade-in">
+      <span>✓</span>
+      <span>{message}</span>
+    </div>
+  )
+}
+
 function StatusBadge({ status }) {
   const s = STATUS_MAP[status] || { label: status, cls: 'bg-gray-100 text-gray-600' }
   return (
@@ -23,7 +37,7 @@ function StatusBadge({ status }) {
   )
 }
 
-function AssignModal({ payment, onClose, onDone }) {
+function AssignModal({ payment, onClose, onDone, onSuccess }) {
   const [names, setNames] = useState(payment.parsed_names?.join(', ') || '')
   const [date, setDate] = useState(payment.parsed_dates?.[0] || '')
   const [selectedSlots, setSelectedSlots] = useState([])
@@ -64,7 +78,7 @@ function AssignModal({ payment, onClose, onDone }) {
         if (slot_time) body.slot_time = slot_time
         lastRes = await api.assignPayment(payment.id, body)
       }
-      setResult({ ok: true, message: lastRes.message })
+      onSuccess(lastRes.message)
       onDone()
     } catch (err) {
       setResult({ ok: false, message: err.message })
@@ -142,12 +156,8 @@ function AssignModal({ payment, onClose, onDone }) {
           )}
         </div>
 
-        {result && (
-          <pre
-            className={`text-xs rounded-lg p-3 mb-4 whitespace-pre-wrap ${
-              result.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-600'
-            }`}
-          >
+        {result && !result.ok && (
+          <pre className="text-xs rounded-lg p-3 mb-4 whitespace-pre-wrap bg-red-50 text-red-600">
             {result.message}
           </pre>
         )}
@@ -178,6 +188,7 @@ export default function AdminPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('')
   const [assignTarget, setAssignTarget] = useState(null)
+  const [toast, setToast] = useState(null)
 
   const load = useCallback((status = activeTab) => {
     setLoading(true)
@@ -314,12 +325,15 @@ export default function AdminPaymentsPage() {
         <AssignModal
           payment={assignTarget}
           onClose={() => setAssignTarget(null)}
+          onSuccess={(msg) => setToast(msg)}
           onDone={() => {
             load(activeTab)
             setAssignTarget(null)
           }}
         />
       )}
+
+      {toast && <Toast message={toast} onHide={() => setToast(null)} />}
     </div>
   )
 }

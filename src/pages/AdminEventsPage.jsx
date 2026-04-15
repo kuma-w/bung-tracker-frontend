@@ -345,7 +345,7 @@ export default function AdminEventsPage() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <Link to={`/events/${formatDate(event.event_date)}`} className={`font-semibold text-sm hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+                          <Link to={`/events/${event.event_date}`} className={`font-semibold text-sm hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
                             {formatDate(event.event_date)}
                           </Link>
                           {past && <span className="text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
@@ -392,7 +392,7 @@ export default function AdminEventsPage() {
                       return (
                         <tr key={event.id} className={`border-b last:border-0 transition-colors ${past ? 'bg-gray-50/60 text-gray-400' : 'hover:bg-gray-50'}`}>
                           <td className="px-5 py-3">
-                            <Link to={`/events/${formatDate(event.event_date)}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
+                            <Link to={`/events/${event.event_date}`} className={`font-medium hover:underline ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
                               {formatDate(event.event_date)}
                             </Link>
                             {past && <span className="ml-2 text-xs bg-gray-100 text-gray-400 px-1.5 py-0.5 rounded-full">종료</span>}
