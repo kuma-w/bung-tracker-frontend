@@ -21,10 +21,14 @@ function EventCard({ event }) {
   const past = isPast(event.event_date);
 
   return (
-    <div className={`rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow ${past ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-gray-100"}`}>
+    <div
+      className={`rounded-xl shadow-sm border p-5 hover:shadow-md transition-shadow ${past ? "bg-gray-50 border-gray-200 opacity-60" : "bg-white border-gray-100"}`}
+    >
       <div className="flex items-start justify-between mb-4">
         <div>
-          <h2 className={`text-base font-bold ${past ? "text-gray-400" : "text-gray-800"}`}>
+          <h2
+            className={`text-base font-bold ${past ? "text-gray-400" : "text-gray-800"}`}
+          >
             {formatDate(event.event_date)}
           </h2>
           <p className="text-sm text-gray-400 mt-0.5">
@@ -36,11 +40,15 @@ function EventCard({ event }) {
             past
               ? "bg-gray-100 text-gray-400"
               : isFull
-              ? "bg-red-100 text-red-600"
-              : "bg-emerald-100 text-emerald-700"
+                ? "bg-red-100 text-red-600"
+                : "bg-emerald-100 text-emerald-700"
           }`}
         >
-          {past ? "종료" : isFull ? "마감" : `${totalCapacity - totalCount}자리 남음`}
+          {past
+            ? "종료"
+            : isFull
+              ? "마감"
+              : `${totalCapacity - totalCount}자리 남음`}
         </span>
       </div>
 
@@ -58,7 +66,11 @@ function EventCard({ event }) {
             <div className="w-full bg-gray-100 rounded-full h-1.5">
               <div
                 className={`h-1.5 rounded-full transition-all ${
-                  past ? "bg-gray-300" : slot.count >= slot.capacity ? "bg-red-400" : "bg-indigo-500"
+                  past
+                    ? "bg-gray-300"
+                    : slot.count >= slot.capacity
+                      ? "bg-red-400"
+                      : "bg-indigo-500"
                 }`}
                 style={{
                   width: `${Math.min(100, (slot.count / slot.capacity) * 100)}%`,
@@ -73,7 +85,11 @@ function EventCard({ event }) {
         <span className="text-gray-400 text-xs">
           전체 {totalCount}/{totalCapacity}명
         </span>
-        <span className={`text-xs font-medium ${past ? "text-gray-400" : "text-indigo-500"}`}>상세 보기 →</span>
+        <span
+          className={`text-xs font-medium ${past ? "text-gray-400" : "text-indigo-500"}`}
+        >
+          상세 보기 →
+        </span>
       </div>
     </div>
   );
@@ -140,7 +156,11 @@ export default function EventsPage() {
             onClick={() => setShowPast((v) => !v)}
             className="flex items-center gap-2 text-sm text-gray-400 hover:text-gray-600 transition-colors mb-4"
           >
-            <span className={`transition-transform ${showPast ? "rotate-90" : ""}`}>▶</span>
+            <span
+              className={`transition-transform ${showPast ? "rotate-90" : ""}`}
+            >
+              ▶
+            </span>
             지난 일정 ({past.length}개)
           </button>
           {showPast && (
