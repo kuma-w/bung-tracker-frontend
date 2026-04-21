@@ -55,7 +55,7 @@ export default function Layout() {
         <div className="hidden sm:flex max-w-5xl mx-auto px-4 py-3 items-center justify-between">
           <div className="flex items-center gap-5">
             <Link to="/" className="text-white text-lg font-bold tracking-wide flex items-center gap-2">
-              🏸 <span>초콕칩 참석현황</span>
+              🏸 <span>초콕칩 누가 오나요?</span>
             </Link>
             <nav className="flex gap-1">
               {desktopLink("/", "일정", true)}
