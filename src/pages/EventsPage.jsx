@@ -126,8 +126,12 @@ export default function EventsPage() {
     );
   }
 
-  const upcoming = events.filter((e) => !isPast(e.event_date));
-  const past = events.filter((e) => isPast(e.event_date));
+  const upcoming = events
+    .filter((e) => !isPast(e.event_date))
+    .sort((a, b) => a.event_date.localeCompare(b.event_date));
+  const past = events
+    .filter((e) => isPast(e.event_date))
+    .sort((a, b) => b.event_date.localeCompare(a.event_date));
 
   return (
     <div>
